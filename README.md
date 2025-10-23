@@ -1,3 +1,6 @@
-# Custom host file
+# Host File Manager
 
-An application that allows you to edit your computers host file
+An simple CLI python host file manager
+
+## Note currently only works on MacOS
+
