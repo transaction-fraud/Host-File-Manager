@@ -1,6 +1,5 @@
 import requests
 import os
-# from pathlib import Path
 from time import sleep
 import shutil
 
@@ -43,7 +42,6 @@ def append_hosts(name, url):
 
         with open(source, "a", encoding="utf-8") as f:
             f.write(response.text + "\n")
-            f.close()
         print(f"{name} appended successfully.")
         stored.append(name)
 
@@ -51,6 +49,8 @@ def append_hosts(name, url):
         print(f"Failed to fetch {name}: {response.status_code}")
 
 def main():
+    if not os.access(destination, os.W_OK):
+        print("Warning: Elevated permissions is required to move files.")
     print("Host Manager")
     sleep(0.1)
     print(f"Currently stored: {stored}")
@@ -99,22 +99,43 @@ def main():
         append_hosts("Adobe telemetry", links["Adobe telemetry"])
 
     elif host_selection == "10":
-        open("hosts", "w").close()
-        with open(destination + '/' + source, 'w') as f:
+        with open(os.path.join(destination, source), 'w') as f:
             pass
-        with open(destination + '/' + source, 'w') as f:
+        with open(os.path.join(destination, source), 'w') as f:
             f.write('127.0.0.1 localhost\n255.255.255.255 broadcasthost\n::1 localhost')
     
         stored.clear()
         print("Cleared hosts file.")
 
     elif host_selection == "11":
-        if os.path.exists(destination + '/' + source):
-            os.remove(destination + '/' + source)
-            try:
-                shutil.move(source, destination)
-            except Exception as e:
-                print(f"An exception has occured: {e}")
+        seen = set()
+        unique = []
+
+        with open(source, 'r') as f:
+            for line in f:
+                if line.startswith("#") or line.strip() == "":
+                    unique.append(line)
+                    continue
+                parts = line.strip().split()
+                if len(parts) >= 2:
+                    domain = parts[1]
+                    if domain not in seen:
+                        seen.add(domain)
+                        unique.append(line)
+
+        with open(source, 'w') as f:
+            f.writelines(unique)
+        
+        if os.path.exists(os.path.join(destination, source)):
+            os.remove(os.path.join(destination, source))
+        try:
+            shutil.copy(source, destination)
+        except Exception as e:
+            print(f"An exception has occured: {e}")
+        
+        print("Applied successfully.")
+            
+
 
     elif host_selection == "12":
         print("Exiting...")
