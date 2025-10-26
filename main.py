@@ -3,6 +3,7 @@ import os
 from time import sleep
 import shutil
 
+
 # Links
 # All files are provided by the Blocklist Project (https://github.com/blocklistproject/Lists)
 
@@ -16,8 +17,19 @@ import shutil
 # Tracking: https://blocklistproject.github.io/Lists/tracking.txt
 # Adobe telemetry: https://blocklistproject.github.io/Lists/adobe.txt
 
+
 source = "hosts"
 destination = "/private/etc"
+
+if os.name == 'nt':
+    destination = os.path.join("C:", "Windows", "System32", "drivers", "etc")
+elif os.name == 'posix':
+    destination = "/private/etc"
+else:
+    destination = "hosts"
+
+if not os.access(destination, os.W_OK):
+    print("Warning: Elevated permissions is required to move files into host directory.")
 
 links = {
     "Abuse": "https://blocklistproject.github.io/Lists/abuse.txt",
@@ -49,8 +61,6 @@ def append_hosts(name, url):
         print(f"Failed to fetch {name}: {response.status_code}")
 
 def main():
-    if not os.access(destination, os.W_OK):
-        print("Warning: Elevated permissions is required to move files.")
     print("Host Manager")
     sleep(0.1)
     print(f"Currently stored: {stored}")
@@ -99,10 +109,8 @@ def main():
         append_hosts("Adobe telemetry", links["Adobe telemetry"])
 
     elif host_selection == "10":
-        with open(os.path.join(destination, source), 'w') as f:
-            pass
-        with open(os.path.join(destination, source), 'w') as f:
-            f.write('127.0.0.1 localhost\n255.255.255.255 broadcasthost\n::1 localhost')
+        with open(os.path.join(destination, "hosts"), 'w') as f:
+            f.write("127.0.0.1 localhost\n255.255.255.255 broadcasthost\n::1 localhost\n")
     
         stored.clear()
         print("Cleared hosts file.")
@@ -128,12 +136,13 @@ def main():
         
         if os.path.exists(os.path.join(destination, source)):
             os.remove(os.path.join(destination, source))
+            print("Applied successfully.")
         try:
-            shutil.copy(source, destination)
+            shutil.copy(source, os.path.join(destination, source))
         except Exception as e:
             print(f"An exception has occured: {e}")
         
-        print("Applied successfully.")
+
             
 
 
